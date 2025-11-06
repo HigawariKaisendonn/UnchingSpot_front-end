@@ -1,15 +1,9 @@
-@import "tailwindcss";
+/* ======= globals.css ======= */
 
+/* CSS変数 */
 :root {
   --background: #ffffff;
   --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -19,8 +13,44 @@
   }
 }
 
+/* CSSリセット */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 基本設定 */
+html,
 body {
-  background: var(--background);
+  font-family: 'Noto Sans JP', sans-serif;
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100%;
+}
+
+/* リンクスタイル */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* レイアウトユーティリティ */
+.container {
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* 見出し */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+}
+
+/* ボタンのベーススタイル */
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  transition: 0.2s;
 }
