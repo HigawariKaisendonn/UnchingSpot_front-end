@@ -1,0 +1,18 @@
+.section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #fafafa;
+  padding: 1.5rem;
+}
+
+.container {
+  max-width: 480px;
+  width: 100%;
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  padding: 3rem 2rem;
+  text-align: center;
+}
