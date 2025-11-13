@@ -1,0 +1,50 @@
+.hamburgerContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.menu {
+  position: absolute;
+  top: 48px;
+  right: 0;
+  width: 180px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+  transition: all 0.25s ease-in-out;
+  z-index: 50;
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 8px 0;
+
+    li {
+      padding: 10px 16px;
+      font-size: 14px;
+
+      a {
+        color: #333;
+        text-decoration: none;
+        display: block;
+        width: 100%;
+        transition: background 0.2s;
+
+        &:hover {
+          background: #f5f5f5;
+        }
+      }
+    }
+  }
+}
+
+.open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
