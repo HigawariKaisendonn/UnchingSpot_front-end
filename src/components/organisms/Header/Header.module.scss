@@ -1,0 +1,33 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background: #fff;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.logo {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.navDesktop {
+  display: none;
+}
+
+.navMobile {
+  display: block;
+}
+
+/* デスクトップ表示 */
+@media (min-width: 768px) {
+  .navDesktop {
+    display: flex;
+    gap: 20px;
+  }
+
+  .navMobile {
+    display: none;
+  }
+}

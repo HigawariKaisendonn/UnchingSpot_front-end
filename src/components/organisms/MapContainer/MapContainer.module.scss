@@ -1,0 +1,16 @@
+.mapContainer {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+}
+
+.mapPlaceholder {
+  background-color: #e2e8f0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: #4a5568;
+}
