@@ -1,0 +1,25 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+.modal {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  width: 360px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.2);
+}
+.header {
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+.header button { background:transparent; border:none; padding:8px 12px; cursor:pointer }
+.header .active { font-weight:700; }
+.close { margin-left:auto }
+.body { margin-top:12px }

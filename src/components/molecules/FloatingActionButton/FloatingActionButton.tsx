@@ -7,11 +7,12 @@ import styles from "./FloatingActionButton.module.scss";
 
 type Props = {
   onClick?: () => void;
+  inline?: boolean;
 };
 
-export const FloatingActionButton: React.FC<Props> = ({ onClick }) => {
+export const FloatingActionButton: React.FC<Props> = ({ onClick, inline = false }) => {
   return (
-    <div className={styles.container}>
+    <div className={inline ? styles.inline : styles.container}>
       <IconButton icon={<Plus />} onClick={onClick} ariaLabel="ピンを追加" />
     </div>
   );

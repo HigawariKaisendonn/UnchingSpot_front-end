@@ -35,7 +35,7 @@ export const HamburgerMenu: React.FC = () => {
       <nav className={`${styles.menu} ${isOpen ? styles.open : ""}`}>
         <ul>
           <li><a href="/home">ホーム</a></li>
-          <li><a href="/register">地点登録</a></li>
+          <li><a href="/register">地点編集</a></li>
           <li><a href="/records">記録一覧</a></li>
           <li><a href="/settings">設定</a></li>
           <li><a href="/account">アカウント</a></li>
