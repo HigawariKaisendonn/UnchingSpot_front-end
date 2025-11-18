@@ -9,8 +9,7 @@ export const HomeTemplate: React.FC = () => {
   return (
     <>
       <HeaderNav />
-      <MapContainer />
-      <FloatingActionButton onClick={() => alert("ピン追加ボタン")} />
+      <MapContainer floatingActionButton={<FloatingActionButton onClick={() => alert("ピン追加ボタン")} />} />
     </>
   );
 };
