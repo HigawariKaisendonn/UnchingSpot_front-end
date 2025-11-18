@@ -2,12 +2,16 @@
 
 import React from "react";
 import styles from "./MapContainer.module.scss";
+import LeafletMap from "@/components/molecules/LeafletMap/LeafletMap";
 
-export const MapContainer: React.FC = () => {
+type Props = {
+  floatingActionButton?: React.ReactNode;
+};
+
+export const MapContainer: React.FC<Props> = ({ floatingActionButton }) => {
   return (
-    <div className={styles.mapContainer}>
-      {/* 現時点では仮の背景（今後APIで地図を描画） */}
-      <div className={styles.mapPlaceholder}>Map will be here</div>
+    <div className={styles.wrapper}>
+      <LeafletMap floatingActionButton={floatingActionButton} />
     </div>
   );
 };
