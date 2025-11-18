@@ -8,6 +8,9 @@ import LocateButton from "@/components/atoms/LocateButton/LocateButton";
 import { IconButton } from "@/components/atoms/IconButton/IconButton";
 import { Plus, Check, X } from "lucide-react";
 import pinImg from "@/assets/images/sdesign_00247.png";
+import PinModal from '@/components/molecules/Pin/PinModal';
+import { normalizeLatitude, normalizeLongitude } from '@/lib/geo';
+import { useAuth } from '@/context/AuthContext';
 
 type Props = {
   floatingActionButton?: React.ReactNode;
@@ -21,6 +24,11 @@ const LeafletMap: React.FC<Props> = ({ floatingActionButton }) => {
   const [Llib, setLlib] = useState<any>(null);
   const [placingPin, setPlacingPin] = useState<boolean>(false);
   const tempMarkerRef = useRef<any>(null);
+  const storedMarkersRef = useRef<any[]>([]);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pendingLatLng, setPendingLatLng] = useState<{ lat: number; lng: number } | null>(null);
+  const { user } = useAuth();
+  const [hideControls, setHideControls] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -53,6 +61,23 @@ const LeafletMap: React.FC<Props> = ({ floatingActionButton }) => {
           pinIconRef.current = null;
         }
         setLlib(L);
+        // load local pins (mock) from localStorage and render (normalize coords)
+        try {
+          const raw = localStorage.getItem('mock_pins');
+          const pins = raw ? JSON.parse(raw) : [];
+          pins.forEach((p: any) => {
+            try {
+              const lat = normalizeLatitude(p.latitude ?? 0);
+              const lng = normalizeLongitude(p.longitude ?? 0);
+              const m = L.marker([lat, lng], { icon: pinIconRef.current ?? undefined }).addTo(createdMap).bindPopup(p.name || 'ピン');
+              storedMarkersRef.current.push(m);
+            } catch (e) {
+              // ignore per-pin errors
+            }
+          });
+        } catch (e) {
+          // ignore
+        }
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error("Leaflet minimal load error:", err);
@@ -76,6 +101,64 @@ const LeafletMap: React.FC<Props> = ({ floatingActionButton }) => {
     };
   }, []);
 
+  // listen for external pin updates (from records page)
+  useEffect(() => {
+    if (!Llib || !mapRef.current) return;
+
+    const loadPins = () => {
+      try {
+        // remove existing stored markers
+        storedMarkersRef.current.forEach((m) => { try { m.remove(); } catch (e) {} });
+        storedMarkersRef.current = [];
+        const raw = localStorage.getItem('mock_pins');
+        const pins = raw ? JSON.parse(raw) : [];
+        pins.forEach((p: any) => {
+          try {
+            const m = Llib.marker([p.latitude, p.longitude], { icon: pinIconRef.current ?? undefined }).addTo(mapRef.current).bindPopup(p.name || 'ピン');
+            storedMarkersRef.current.push(m);
+          } catch (e) {
+            // ignore
+          }
+        });
+      } catch (e) {
+        // ignore
+      }
+    };
+
+    // initial load
+    loadPins();
+
+    const handler = () => loadPins();
+    window.addEventListener('mock_pins_updated', handler);
+    // listen for records panel open/close to hide controls
+    const recHandler = (e: any) => {
+      try {
+        const open = e?.detail?.open;
+        setHideControls(Boolean(open));
+      } catch (err) {
+        // ignore
+      }
+    };
+    window.addEventListener('records_panel_open', recHandler as EventListener);
+    return () => window.removeEventListener('mock_pins_updated', handler);
+    // remove recHandler as well
+    // (can't easily remove here because handler is in closure; add cleanup below)
+  }, [Llib]);
+
+  // separate effect to cleanly register/unregister records_panel_open globally
+  useEffect(() => {
+    const recHandler = (e: any) => {
+      try {
+        const open = e?.detail?.open;
+        setHideControls(Boolean(open));
+      } catch (err) {
+        // ignore
+      }
+    };
+    window.addEventListener('records_panel_open', recHandler as EventListener);
+    return () => window.removeEventListener('records_panel_open', recHandler as EventListener);
+  }, []);
+
   // request browser geolocation and show marker
   const locate = () => {
     if (!navigator.geolocation) {
@@ -91,12 +174,16 @@ const LeafletMap: React.FC<Props> = ({ floatingActionButton }) => {
           const L = Llib;
           if (!L || !mapRef.current) return;
 
-          mapRef.current.setView([latitude, longitude], 15);
+          // normalize to standard geographic ranges
+          const nLat = normalizeLatitude(latitude);
+          const nLng = normalizeLongitude(longitude);
+
+          mapRef.current.setView([nLat, nLng], 15);
 
           if (markerRef.current) {
-            markerRef.current.setLatLng([latitude, longitude]);
+            markerRef.current.setLatLng([nLat, nLng]);
           } else {
-            markerRef.current = L.marker([latitude, longitude], {
+            markerRef.current = L.marker([nLat, nLng], {
               icon: pinIconRef.current ?? undefined,
             }).addTo(mapRef.current).bindPopup("現在地");
             markerRef.current.openPopup();
@@ -125,7 +212,9 @@ const LeafletMap: React.FC<Props> = ({ floatingActionButton }) => {
       if (placingPin) return;
 
       const center = map.getCenter();
-      const marker = L.marker([center.lat, center.lng], { draggable: true, icon: pinIconRef.current ?? undefined }).addTo(map);
+      const cLat = normalizeLatitude(center.lat);
+      const cLng = normalizeLongitude(center.lng);
+      const marker = L.marker([cLat, cLng], { draggable: true, icon: pinIconRef.current ?? undefined }).addTo(map);
       tempMarkerRef.current = marker;
       setPlacingPin(true);
     } catch (e) {
@@ -141,6 +230,8 @@ const LeafletMap: React.FC<Props> = ({ floatingActionButton }) => {
         tempMarkerRef.current = null;
       }
       setPlacingPin(false);
+      setShowPinModal(false);
+      setPendingLatLng(null);
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error("cancelPinPlacement error:", e);
@@ -151,40 +242,47 @@ const LeafletMap: React.FC<Props> = ({ floatingActionButton }) => {
     try {
       if (!tempMarkerRef.current) return;
       const latlng = tempMarkerRef.current.getLatLng();
+      setPendingLatLng({ lat: latlng.lat, lng: latlng.lng });
+      setShowPinModal(true);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error("confirmPinPlacement error:", e);
+    }
+  };
 
-      // convert to simple object
-      const payload = { latitude: latlng.lat, longitude: latlng.lng };
+  const savePinLocally = (name: string) => {
+    try {
+      if (!pendingLatLng) return;
+      const userId = user?.id ?? 'anonymous';
+      const id = `local-${Date.now()}`;
+      const pin = {
+        id,
+        user_id: userId,
+        name,
+        latitude: normalizeLatitude(pendingLatLng.lat),
+        longitude: normalizeLongitude(pendingLatLng.lng),
+        created_at: new Date().toISOString(),
+      };
+      const raw = localStorage.getItem('mock_pins');
+      const pins = raw ? JSON.parse(raw) : [];
+      pins.push(pin);
+      localStorage.setItem('mock_pins', JSON.stringify(pins));
 
-      // send to backend (replace URL with real endpoint)
+      // finalize temp marker
       try {
-        const res = await fetch('/api/pins', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        if (!res.ok) {
-          // eslint-disable-next-line no-console
-          console.error('Failed to send pin:', await res.text());
-        } else {
-          // eslint-disable-next-line no-console
-          console.log('Pin saved:', await res.json());
-        }
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.error('Network error sending pin:', e);
-      }
-
-      // make the marker permanent (not draggable)
-      try {
-        tempMarkerRef.current.dragging?.disable?.();
+        tempMarkerRef.current?.dragging?.disable?.();
+        tempMarkerRef.current?.bindPopup(name ?? 'ピン');
+        storedMarkersRef.current.push(tempMarkerRef.current);
       } catch (e) {
         // ignore
       }
       tempMarkerRef.current = null;
       setPlacingPin(false);
+      setShowPinModal(false);
+      setPendingLatLng(null);
     } catch (e) {
       // eslint-disable-next-line no-console
-      console.error("confirmPinPlacement error:", e);
+      console.error('savePinLocally error:', e);
     }
   };
 
@@ -209,8 +307,9 @@ const LeafletMap: React.FC<Props> = ({ floatingActionButton }) => {
   return (
     <div className={styles.root} style={{ position: "relative" }}>
       <Map ref={mapElementRef} />
+      {showPinModal && <PinModal onCancel={() => setShowPinModal(false)} onSave={savePinLocally} />}
 
-      <div className={styles.controls}>
+      <div className={styles.controls} style={hideControls ? { display: 'none' } : undefined}>
         <div className={styles.topControls}>
           <div className={styles.zoom}>
             <button aria-label="Zoom in" className={styles.zoomButton} onClick={zoomIn}>+</button>
