@@ -5,18 +5,24 @@ import styles from './RecordsPanel.module.scss';
 import PinEditModal from './PinEditModal';
 import { normalizeLatitude, normalizeLongitude } from '@/lib/geo';
 import PanelLayout from "@/components/molecules/PanelLayout/PanelLayout";
+import { getPins, deletePin, updatePin, type Pin } from '@/lib/pinApi';
 
 export default function RecordsPanel({ onClose }: { onClose?: () => void }) {
-  const [pins, setPins] = useState<any[]>([]);
-  const [editing, setEditing] = useState<any | null>(null);
+  const [pins, setPins] = useState<Pin[]>([]);
+  const [editing, setEditing] = useState<Pin | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const load = () => {
+  const load = async () => {
     try {
-      const raw = localStorage.getItem('mock_pins');
-      const arr = raw ? JSON.parse(raw) : [];
+      setLoading(true);
+      const arr = await getPins();
       setPins(arr);
     } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to load pins:', e);
       setPins([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -24,9 +30,13 @@ export default function RecordsPanel({ onClose }: { onClose?: () => void }) {
     load();
     const handler = () => load();
     window.addEventListener('mock_pins_updated', handler);
+    window.addEventListener('pins_updated', handler);
     // notify map to hide map controls while panel is open
     window.dispatchEvent(new CustomEvent('records_panel_open', { detail: { open: true } }));
-    return () => window.removeEventListener('mock_pins_updated', handler);
+    return () => {
+      window.removeEventListener('mock_pins_updated', handler);
+      window.removeEventListener('pins_updated', handler);
+    };
   }, []);
 
   useEffect(() => {
@@ -36,25 +46,47 @@ export default function RecordsPanel({ onClose }: { onClose?: () => void }) {
     };
   }, []);
 
-  const removePin = (id: string) => {
-    const arr = pins.filter(p => p.id !== id);
-    setPins(arr);
-    localStorage.setItem('mock_pins', JSON.stringify(arr));
-    window.dispatchEvent(new CustomEvent('mock_pins_updated'));
+  const removePin = async (id: string) => {
+    try {
+      await deletePin(id);
+      setPins(pins.filter(p => p.id !== id));
+      window.dispatchEvent(new CustomEvent('pins_updated'));
+    } catch (e: any) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to delete pin:', e);
+      const errorMessage = e?.message || 'ピンの削除に失敗しました';
+      window.alert(errorMessage);
+    }
   };
 
-  const savePin = (updated: any) => {
-    const norm = { ...updated, latitude: normalizeLatitude(updated.latitude), longitude: normalizeLongitude(updated.longitude) };
-    const arr = pins.map((p) => p.id === updated.id ? norm : p);
-    setPins(arr);
-    localStorage.setItem('mock_pins', JSON.stringify(arr));
-    setEditing(null);
-    window.dispatchEvent(new CustomEvent('mock_pins_updated'));
+  const savePin = async (updated: Pin) => {
+    try {
+      const norm = { 
+        ...updated, 
+        latitude: normalizeLatitude(updated.latitude), 
+        longitude: normalizeLongitude(updated.longitude) 
+      };
+      const savedPin = await updatePin(updated.id, {
+        name: norm.name,
+        latitude: norm.latitude,
+        longitude: norm.longitude,
+      });
+      setPins(pins.map((p) => p.id === updated.id ? savedPin : p));
+      setEditing(null);
+      window.dispatchEvent(new CustomEvent('pins_updated'));
+    } catch (e: any) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to update pin:', e);
+      const errorMessage = e?.message || 'ピンの更新に失敗しました';
+      window.alert(errorMessage);
+    }
   };
 
   return (
   <PanelLayout title="記録一覧" onClose={onClose}>
-    {pins.length === 0 ? (
+    {loading ? (
+      <div>読み込み中...</div>
+    ) : pins.length === 0 ? (
       <div className={styles.empty}>保存されたピンがありません</div>
     ) : (
       <ul className={styles.list}>

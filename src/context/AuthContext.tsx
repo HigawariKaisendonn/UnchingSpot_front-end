@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import apiFetch from '@/lib/api';
+import apiFetch, { setToken, getToken } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 type User = { id: string; name?: string; email: string } | null;
@@ -40,10 +40,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
+      const token = getToken();
+      if (!token) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
       const data = await apiFetch('/api/auth/me', { method: 'GET' });
-      setUser(data?.user ?? null);
+      setUser(data ?? null);
     } catch (e) {
       setUser(null);
+      // トークンが無効な場合は削除
+      setToken(null);
     } finally {
       setLoading(false);
     }
@@ -78,11 +86,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      const data = await apiFetch('/api/auth/signup', { method: 'POST', body: JSON.stringify(payload) });
-      setUser(data?.user ?? null);
-      return { ok: true };
-    } catch (err) {
-      return { ok: false, error: err };
+      // サインアップ
+      const signupData = await apiFetch('/api/auth/signup', { 
+        method: 'POST', 
+        body: JSON.stringify(payload),
+        skipAuth: true 
+      });
+      
+      // サインアップ後、自動的にログイン処理を行う
+      try {
+        const loginData = await apiFetch('/api/auth/login', { 
+          method: 'POST', 
+          body: JSON.stringify({ email: payload.email, password: payload.password }),
+          skipAuth: true 
+        });
+        
+        // トークンを保存
+        if (loginData?.token) {
+          setToken(loginData.token);
+          setUser(loginData.user ?? signupData ?? null);
+        } else {
+          setUser(signupData ?? null);
+        }
+        return { ok: true };
+      } catch (loginErr) {
+        // ログインに失敗した場合でも、サインアップは成功しているのでユーザー情報を保存
+        setUser(signupData ?? null);
+        return { ok: true };
+      }
+    } catch (err: any) {
+      // エラーメッセージを適切に処理
+      const errorMessage = err?.body?.error?.message || err?.message || '登録に失敗しました';
+      return { ok: false, error: { message: errorMessage, code: err?.body?.error?.code } };
     }
   };
 
@@ -105,11 +140,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      const data = await apiFetch('/api/auth/login', { method: 'POST', body: JSON.stringify(payload) });
-      setUser(data?.user ?? null);
+      const data = await apiFetch('/api/auth/login', { 
+        method: 'POST', 
+        body: JSON.stringify(payload),
+        skipAuth: true 
+      });
+      
+      // トークンを保存
+      if (data?.token) {
+        setToken(data.token);
+        setUser(data.user ?? null);
+      } else {
+        setUser(data ?? null);
+      }
       return { ok: true };
-    } catch (err) {
-      return { ok: false, error: err };
+    } catch (err: any) {
+      // エラーメッセージを適切に処理
+      const errorMessage = err?.body?.error?.message || err?.message || 'ログインに失敗しました';
+      return { ok: false, error: { message: errorMessage, code: err?.body?.error?.code } };
     }
   };
 
@@ -128,6 +176,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (e) {
       // ignore
     }
+    // トークンを削除
+    setToken(null);
     setUser(null);
     // navigate to root after logout
     try { router.push('/'); } catch (e) { /* ignore */ }
