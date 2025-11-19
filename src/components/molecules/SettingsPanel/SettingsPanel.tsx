@@ -1,7 +1,7 @@
 "use client";
 
-import React from 'react';
-import styles from './SettingsPanel.module.scss';
+import React from "react";
+import PanelLayout from "@/components/molecules/PanelLayout/PanelLayout";
 
 interface PanelProps {
   onClose: () => void;
@@ -9,25 +9,52 @@ interface PanelProps {
 
 const SettingsPanel: React.FC<PanelProps> = ({ onClose }) => {
   return (
-    <aside className={styles.panel}>
-      <div className={styles.header}>
-        <h3>設定</h3>
-        <button className={styles.closeButton} onClick={onClose}>×</button>
-      </div>
-      <div className={styles.content}>
-        <div className={styles.item}>
-          <label>テーマ</label>
-          <select>
+    <PanelLayout title="設定" onClose={onClose}>
+      <div style={{ padding: "16px" }}>
+
+        {/* --- テーマ選択 --- */}
+        <div style={{ marginBottom: "20px" }}>
+          <label
+            style={{
+              display: "block",
+              fontWeight: "bold",
+              marginBottom: "6px",
+            }}
+          >
+            テーマ
+          </label>
+          <select
+            style={{
+              width: "100%",
+              padding: "8px",
+              borderRadius: "6px",
+              border: "1px solid #ccc",
+            }}
+          >
             <option value="light">ライト</option>
             <option value="dark">ダーク</option>
           </select>
         </div>
-        <div className={styles.item}>
-          <label>通知</label>
-          <input type="checkbox" /> 有効
+
+        {/* --- 通知設定 --- */}
+        <div style={{ marginBottom: "20px" }}>
+          <label
+            style={{
+              display: "block",
+              fontWeight: "bold",
+              marginBottom: "6px",
+            }}
+          >
+            通知
+          </label>
+          <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <input type="checkbox" />
+            有効
+          </label>
         </div>
+
       </div>
-    </aside>
+    </PanelLayout>
   );
 };
 

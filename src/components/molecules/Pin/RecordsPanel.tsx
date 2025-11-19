@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import styles from './RecordsPanel.module.scss';
 import PinEditModal from './PinEditModal';
 import { normalizeLatitude, normalizeLongitude } from '@/lib/geo';
+import PanelLayout from "@/components/molecules/PanelLayout/PanelLayout";
 
 export default function RecordsPanel({ onClose }: { onClose?: () => void }) {
   const [pins, setPins] = useState<any[]>([]);
@@ -52,32 +53,33 @@ export default function RecordsPanel({ onClose }: { onClose?: () => void }) {
   };
 
   return (
-    <aside className={styles.panel}>
-      <div className={styles.header}>
-        <h3>記録一覧</h3>
-        <button className={styles.close} onClick={() => onClose?.()}>閉じる</button>
-      </div>
-      <div className={styles.content}>
-        {pins.length === 0 ? (
-          <div className={styles.empty}>保存されたピンがありません</div>
-        ) : (
-          <ul className={styles.list}>
-            {pins.map(p => (
-              <li key={p.id} className={styles.item}>
-                <div>
-                  <div className={styles.name}>{p.name}</div>
-                  <div className={styles.coord}>{p.latitude.toFixed(6)}, {p.longitude.toFixed(6)}</div>
-                </div>
-                <div className={styles.actions}>
-                  <button onClick={() => setEditing(p)}>編集</button>
-                  <button onClick={() => removePin(p.id)}>削除</button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-      {editing && <PinEditModal pin={editing} onCancel={() => setEditing(null)} onSave={savePin} />}
-    </aside>
-  );
+  <PanelLayout title="記録一覧" onClose={onClose}>
+    {pins.length === 0 ? (
+      <div className={styles.empty}>保存されたピンがありません</div>
+    ) : (
+      <ul className={styles.list}>
+        {pins.map(p => (
+          <li key={p.id} className={styles.item}>
+            <div>
+              <div className={styles.name}>{p.name}</div>
+              <div className={styles.coord}>{p.latitude.toFixed(6)}, {p.longitude.toFixed(6)}</div>
+            </div>
+            <div className={styles.actions}>
+              <button onClick={() => setEditing(p)}>編集</button>
+              <button onClick={() => removePin(p.id)}>削除</button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    )}
+
+    {editing && (
+      <PinEditModal
+        pin={editing}
+        onCancel={() => setEditing(null)}
+        onSave={savePin}
+      />
+    )}
+  </PanelLayout>
+);
 }

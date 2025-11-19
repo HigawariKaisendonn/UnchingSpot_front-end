@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import styles from "./NawabarPanel.module.scss";
-import { normalizeLatitude, normalizeLongitude } from "@/lib/geo";
+import PanelLayout from "@/components/molecules/PanelLayout/PanelLayout";
 
 type Pin = {
   id: string;
@@ -14,10 +14,10 @@ type Pin = {
 export default function NawabarPanel({ onClose }: { onClose?: () => void }) {
   const [selectedPin, setSelectedPin] = useState<Pin | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [polygonPins, setPolygonPins] = useState<Pin[]>([]); // 囲み中のピン
+  const [polygonPins, setPolygonPins] = useState<Pin[]>([]);
 
   /*------------------------------------------
-    初回読み込み：選択中のピン情報を取得
+    初回読み込み
   -------------------------------------------*/
   useEffect(() => {
     const load = () => {
@@ -37,115 +37,130 @@ export default function NawabarPanel({ onClose }: { onClose?: () => void }) {
 
     load();
 
-    // ピン更新があったら再読み込み
     const handler = () => load();
     window.addEventListener("mock_pins_updated", handler);
-    
-    // パネル開いたことを通知
-    window.dispatchEvent(new CustomEvent("nawabarPanel:open", { detail: { open: true } }));
+
+    // Panel open
+    window.dispatchEvent(
+      new CustomEvent("panel_open_state", { detail: { open: true } })
+    );
 
     return () => {
       window.removeEventListener("mock_pins_updated", handler);
 
-      // パネル閉じたことを通知
-      window.dispatchEvent(new CustomEvent("nawabarPanel:open", { detail: { open: false } }));
+      // Panel close
+      window.dispatchEvent(
+        new CustomEvent("panel_open_state", { detail: { open: false } })
+      );
     };
   }, []);
 
   /*------------------------------------------
-    地図側から選択中ピンの変更イベントを受け取る
+    地図側からピン選択
   -------------------------------------------*/
   useEffect(() => {
     const handler = (e: any) => setSelectedPin(e.detail.pin);
-
     window.addEventListener("pin:selected", handler);
-
     return () => window.removeEventListener("pin:selected", handler);
   }, []);
 
   /*------------------------------------------
-    囲み中のピン（地図側から送られる）
+    囲み中のピン（地図 → パネル）
   -------------------------------------------*/
   useEffect(() => {
     const handler = (e: any) => setPolygonPins(e.detail.pins);
     window.addEventListener("nawabar:updatePolygon", handler);
-
     return () => window.removeEventListener("nawabar:updatePolygon", handler);
   }, []);
 
   /*------------------------------------------
-    編集開始
+    編集
   -------------------------------------------*/
   const startEdit = () => {
     setIsEditMode(true);
     window.dispatchEvent(new CustomEvent("editMode:on"));
   };
 
-  /*------------------------------------------
-    キャンセル（1つ前のピンに戻す）
-  -------------------------------------------*/
   const cancelEdit = () => {
     setIsEditMode(false);
     window.dispatchEvent(new CustomEvent("editMode:cancel"));
   };
 
-  /*------------------------------------------
-    決定（地図側で保存処理）
-  -------------------------------------------*/
   const confirmEdit = () => {
-    if (polygonPins.length < 3) return; // 不正防止
+    if (polygonPins.length < 3) return;
     setIsEditMode(false);
     window.dispatchEvent(new CustomEvent("editMode:confirm"));
   };
 
   return (
-    <aside className={styles.panel}>
-      {/* ヘッダー */}
-      <div className={styles.header}>
-        <h3>ナワバリ編集</h3>
-        <button className={styles.close} onClick={() => onClose?.()}>
-          ×
-        </button>
-      </div>
+    <PanelLayout title="ナワバリ編集" onClose={onClose}>
+      <div style={{ padding: "16px" }}>
 
-      {/* 選択ピン情報 */}
-      <div className={styles.content}>
+        {/* --- ピン情報 --- */}
         {!selectedPin ? (
-          <div className={styles.empty}>ピンが選択されていません</div>
+          <p style={{ color: "#666", textAlign: "center", marginTop: "32px" }}>
+            ピンが選択されていません
+          </p>
         ) : (
-          <div className={styles.info}>
-            <div className={styles.name}>{selectedPin.name}</div>
-            <div className={styles.coord}>
+          <div style={{ marginBottom: "24px" }}>
+            <h4 style={{ margin: 0 }}>{selectedPin.name}</h4>
+            <p style={{ margin: 0, color: "#444" }}>
               {selectedPin.latitude.toFixed(6)}, {selectedPin.longitude.toFixed(6)}
-            </div>
+            </p>
           </div>
         )}
-      </div>
 
-      {/* 編集ボタン or 決定/キャンセル */}
-      <div className={styles.footer}>
+        {/* --- 編集フッター --- */}
         {!isEditMode ? (
           <button
-            className={styles.editBtn}
             onClick={startEdit}
+            style={{
+              width: "100%",
+              padding: "10px",
+              borderRadius: "6px",
+              background: "#1976d2",
+              color: "white",
+              border: "none",
+              cursor: "pointer",
+            }}
           >
             編集
           </button>
         ) : (
-          <div className={styles.editControls}>
+          <>
             <button
               onClick={confirmEdit}
-              disabled={polygonPins.length < 3} // 囲めてない
-              className={polygonPins.length < 3 ? styles.disabled : styles.okBtn}
+              disabled={polygonPins.length < 3}
+              style={{
+                width: "100%",
+                padding: "10px",
+                borderRadius: "6px",
+                background: polygonPins.length < 3 ? "#aaa" : "#4caf50",
+                color: "white",
+                border: "none",
+                cursor: polygonPins.length < 3 ? "not-allowed" : "pointer",
+                marginBottom: "8px",
+              }}
             >
               決定
             </button>
-            <button className={styles.cancelBtn} onClick={cancelEdit}>
+
+            <button
+              onClick={cancelEdit}
+              style={{
+                width: "100%",
+                padding: "10px",
+                borderRadius: "6px",
+                background: "#ccc",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
               キャンセル
             </button>
-          </div>
+          </>
         )}
       </div>
-    </aside>
+    </PanelLayout>
   );
 }

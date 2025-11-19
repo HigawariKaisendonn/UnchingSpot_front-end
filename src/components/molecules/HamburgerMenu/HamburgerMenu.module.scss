@@ -48,3 +48,33 @@
   transform: translateY(0);
   pointer-events: auto;
 }
+/* メニュー項目 */
+.menu li {
+  width: 100%;
+}
+
+.menu li button,
+.menu li a {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  font-size: 16px;
+  color: #333;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: #f3f3f3;
+  }
+
+  &:active {
+    background: #e2e2e2;
+    transform: scale(0.99);
+  }
+}

@@ -1,7 +1,7 @@
 "use client";
 
-import React from 'react';
-import styles from './AccountPanel.module.scss';
+import React from "react";
+import PanelLayout from "@/components/molecules/PanelLayout/PanelLayout";
 
 interface PanelProps {
   onClose: () => void;
@@ -9,20 +9,28 @@ interface PanelProps {
 
 const AccountPanel: React.FC<PanelProps> = ({ onClose }) => {
   return (
-    <aside className={styles.panel}>
-      <div className={styles.header}>
-        <h3>アカウント</h3>
-        <button className={styles.closeButton} onClick={onClose}>×</button>
-      </div>
-      <div className={styles.content}>
-        <div className={styles.item}>
-          <span>ユーザー名:</span> <strong>テストユーザー</strong>
+    <PanelLayout title="アカウント" onClose={onClose}>
+      <div style={{ padding: "16px" }}>
+        <div style={{ marginBottom: "16px" }}>
+          <span>ユーザー名：</span>
+          <strong>テストユーザー</strong>
         </div>
-        <div className={styles.item}>
-          <button className={styles.logoutButton}>ログアウト</button>
-        </div>
+
+        <button
+          style={{
+            padding: "10px",
+            width: "100%",
+            backgroundColor: "#e53935",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+          }}
+        >
+          ログアウト
+        </button>
       </div>
-    </aside>
+    </PanelLayout>
   );
 };
 
