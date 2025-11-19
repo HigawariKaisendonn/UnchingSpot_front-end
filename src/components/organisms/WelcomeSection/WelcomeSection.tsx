@@ -13,11 +13,30 @@ export const WelcomeSection = () => {
   const router = useRouter();
 
   const onStart = () => {
-    // if already logged in, go to /home
+    // ---------------------------------------------
+    // フロー説明
+    //
+    // はじめるボタン押下 → すでにログイン済みなら /home へ遷移
+    // 未ログインなら AuthModal を表示し、ログインまたは新規登録を行う
+    //
+    // AuthModal 内で使うAPI（Goバックエンド）
+    // ---------------------------------------------
+    //
+    //  アカウント登録（POST /api/auth/signup）
+    //  body = { email, password, name }
+    //
+    //  ログイン（POST /api/auth/login）
+    //  body = { email, password }
+    //
+    //  ログイン後のユーザー確認（GET /api/auth/me）
+    //
+    // これらは AuthContext 内で fetch を使って実行する
+    // ---------------------------------------------
     if (!loading && user) {
       router.push('/home');
       return;
     }
+    // 未ログイン → 認証モーダルを表示
     setShowModal(true);
   };
 

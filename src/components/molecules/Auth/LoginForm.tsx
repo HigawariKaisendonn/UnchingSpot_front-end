@@ -16,6 +16,7 @@ export default function LoginForm() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    // 🔽 AuthContext の login（内部で POST /auth/login を呼ぶ）
     const res = await login({ email, password });
     setLoading(false);
     if (res.ok) {

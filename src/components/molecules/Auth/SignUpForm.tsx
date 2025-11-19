@@ -17,6 +17,7 @@ export default function SignUpForm() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    // 🔽 AuthContext.signup()（内部で POST /auth/signup を実行）
     const res = await signup({ email, password, name });
     setLoading(false);
       if (res.ok) {
