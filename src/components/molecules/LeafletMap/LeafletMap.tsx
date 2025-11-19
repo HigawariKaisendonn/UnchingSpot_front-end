@@ -125,7 +125,7 @@ const LeafletMap: React.FC<Props> = ({ floatingActionButton }) => {
           });
         }
       });
-      
+
       // 未保存のピンをAPIに保存
       for (const pinData of pinsToSave) {
         try {
@@ -135,7 +135,7 @@ const LeafletMap: React.FC<Props> = ({ floatingActionButton }) => {
           console.error('Failed to save pin:', e);
         }
       }
-      
+
       // ピン一覧をリフレッシュ
       if (pinsToSave.length > 0) {
         await refreshPins();
@@ -162,11 +162,13 @@ const LeafletMap: React.FC<Props> = ({ floatingActionButton }) => {
       setShowAreaModal(false);
       setSelectedPins([]); // 選択解除
       setSelectionFinished(false);
-      
+      setEditMode(false); // 編集モードを終了
+
       window.dispatchEvent(new Event('mock_areas_updated'));
       window.dispatchEvent(new CustomEvent('mock_pins_updated'));
       window.dispatchEvent(new CustomEvent('pins_updated'));
       window.dispatchEvent(new CustomEvent('connects_updated'));
+      window.dispatchEvent(new Event('editMode:off')); // 編集モードオフイベントを発火
     } catch (e: any) {
       // eslint-disable-next-line no-console
       console.error('saveAreaLocally error:', e);
@@ -234,8 +236,8 @@ const LeafletMap: React.FC<Props> = ({ floatingActionButton }) => {
         // 選択完了：最初のピンを再選択して閉じた図形を描画
         const closedCoords = [...coords, coords[0]];
         polygonRef.current = Llib.polygon(closedCoords, { color: '#1976d2', fillColor: '#90caf9', fillOpacity: 0.3, weight: 2 }).addTo(mapRef.current);
-        // エリア名入力モーダルを表示
-        if (!showAreaModal) setShowAreaModal(true);
+        // ポリゴン完成イベントを発火（ナワバリパネルの決定ボタンを有効にする）
+        window.dispatchEvent(new CustomEvent("nawabar:polygonComplete"));
       }
     }
   }, [selectedPins, selectionFinished, Llib, editMode, allPins]);
@@ -305,10 +307,13 @@ const LeafletMap: React.FC<Props> = ({ floatingActionButton }) => {
     };
 
     const onEditConfirm = () => {
+      // ナワバリパネルの「決定」ボタンが押された時
       // 選択が完了している場合（selectedPins.length >= 3 かつ selectionFinished = true）
       // AreaModalを表示
       if (selectedPins.length >= 3 && selectionFinished) {
         setShowAreaModal(true);
+      } else {
+        window.alert('ナワバリが完成していません。最初のピンをもう一度クリックして図形を完成させてください。');
       }
     };
     window.addEventListener("editMode:on", onEditOn);
@@ -706,13 +711,15 @@ const LeafletMap: React.FC<Props> = ({ floatingActionButton }) => {
       <Map ref={mapElementRef} />
       {showPinModal && <PinModal onCancel={() => setShowPinModal(false)} onSave={savePinLocally} />}
       {showAreaModal && selectionFinished && selectedPins.length >= 3 && (
-        <AreaModal 
-          onCancel={() => { 
-            setShowAreaModal(false); 
-            setSelectedPins([]); 
-            setSelectionFinished(false); 
-          }} 
-          onSave={saveAreaLocally} 
+        <AreaModal
+          onCancel={() => {
+            setShowAreaModal(false);
+            setSelectedPins([]);
+            setSelectionFinished(false);
+            setEditMode(false); // 編集モードを終了
+            window.dispatchEvent(new Event('editMode:off')); // 編集モードオフイベントを発火
+          }}
+          onSave={saveAreaLocally}
         />
       )}
 

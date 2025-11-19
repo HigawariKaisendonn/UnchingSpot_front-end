@@ -12,6 +12,7 @@ export default function NawabarPanel({ onClose }: { onClose?: () => void }) {
   const [polygonPins, setPolygonPins] = useState<Pin[]>([]);
   const [connects, setConnects] = useState<Connect[]>([]);
   const [pins, setPins] = useState<Pin[]>([]);
+  const [isPolygonComplete, setIsPolygonComplete] = useState(false);
 
   /*------------------------------------------
     初回読み込み
@@ -80,15 +81,26 @@ export default function NawabarPanel({ onClose }: { onClose?: () => void }) {
   }, []);
 
   /*------------------------------------------
+    ポリゴン完成検知
+  -------------------------------------------*/
+  useEffect(() => {
+    const handler = () => setIsPolygonComplete(true);
+    window.addEventListener("nawabar:polygonComplete", handler);
+    return () => window.removeEventListener("nawabar:polygonComplete", handler);
+  }, []);
+
+  /*------------------------------------------
     編集
   -------------------------------------------*/
   const startEdit = () => {
     setIsEditMode(true);
+    setIsPolygonComplete(false);
     window.dispatchEvent(new CustomEvent("editMode:on"));
   };
 
   const cancelEdit = () => {
     setIsEditMode(false);
+    setIsPolygonComplete(false);
     window.dispatchEvent(new CustomEvent("editMode:cancel"));
     // 編集モードをオフにするイベントも発火して、線をクリア
     window.dispatchEvent(new Event("editMode:off"));
@@ -211,15 +223,15 @@ export default function NawabarPanel({ onClose }: { onClose?: () => void }) {
             </div>
             <button
               onClick={confirmEdit}
-              disabled={!isEditMode}
+              disabled={!isPolygonComplete}
               style={{
                 width: "100%",
                 padding: "10px",
                 borderRadius: "6px",
-                background: isEditMode ? "#4caf50" : "#aaa",
+                background: isPolygonComplete ? "#4caf50" : "#aaa",
                 color: "white",
                 border: "none",
-                cursor: isEditMode ? "pointer" : "not-allowed",
+                cursor: isPolygonComplete ? "pointer" : "not-allowed",
                 marginBottom: "8px",
               }}
             >
