@@ -5,11 +5,14 @@ import { IconButton } from "@/components/atoms/IconButton/IconButton";
 import { Menu, X } from "lucide-react";
 import styles from "./HamburgerMenu.module.scss";
 import RecordsPanel from '@/components/molecules/Pin/RecordsPanel';
+import NawabarPanel from "../NawabarPanel/NawabarPanel";
 
 export const HamburgerMenu: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const [isRecordsOpen, setIsRecordsOpen] = useState(false);
+  const [isNawabarOpen, setIsNawabarOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const toggleMenu = () => setIsOpen((prev) => !prev);
 
   // メニュー外クリックで閉じる
@@ -36,7 +39,7 @@ export const HamburgerMenu: React.FC = () => {
       <nav className={`${styles.menu} ${isOpen ? styles.open : ""}`}>
         <ul>
           <li><a href="/home">ホーム</a></li>
-          <li><a href="/register">地点編集</a></li>
+          <li><button onClick={() => setIsNawabarOpen(true)}>ナワバリ編集</button></li>
           <li><button onClick={() => setIsRecordsOpen(true)}>記録一覧</button></li>
           <li><a href="/settings">設定</a></li>
           <li><a href="/account">アカウント</a></li>
@@ -45,6 +48,10 @@ export const HamburgerMenu: React.FC = () => {
 
       {isRecordsOpen && (
         <RecordsPanel onClose={() => setIsRecordsOpen(false)} />
+      )}
+
+      {isNawabarOpen && (
+        <NawabarPanel onClose={() => setIsNawabarOpen(false)} />
       )}
     </div>
   );
