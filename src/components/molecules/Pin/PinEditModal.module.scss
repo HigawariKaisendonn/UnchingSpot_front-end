@@ -1,0 +1,7 @@
+.backdrop { position: fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.4); z-index:3000 }
+.modal { background:#fff; padding:16px; border-radius:8px; width:360px }
+.modal label { display:block; margin-top:8px; font-size:12px }
+.modal input { width:100%; padding:8px; border:1px solid #ddd; border-radius:6px }
+.actions { display:flex; gap:8px; justify-content:flex-end; margin-top:12px }
+.cancel { background:#fff; border:1px solid #ccc; padding:8px 12px; border-radius:6px }
+.save { background:#2b6cb0; color:#fff; border:none; padding:8px 12px; border-radius:6px }

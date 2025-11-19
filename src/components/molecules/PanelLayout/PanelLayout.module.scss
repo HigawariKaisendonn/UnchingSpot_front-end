@@ -1,0 +1,38 @@
+.panel {
+  width: 320px;
+  height: 100%;
+  background: #fff;
+  border-left: 1px solid #ddd;
+  position: fixed;
+  right: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+
+  z-index: 9000;
+}
+
+.header {
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+
+  h3 {
+    margin: 0;
+    font-size: 18px;
+  }
+}
+
+.close {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.content {
+  padding: 16px;
+  flex: 1;
+  overflow-y: auto;
+}
