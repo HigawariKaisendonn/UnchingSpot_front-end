@@ -244,8 +244,8 @@ const LeafletMap: React.FC<Props> = ({ floatingActionButton }) => {
   
   // Connectから図形を描画
   useEffect(() => {
-    if (!Llib || !mapRef.current || connects.length === 0) return;
-    
+    if (!Llib || !mapRef.current) return;
+
     // 既存のConnect図形を削除
     connectsPolygonsRef.current.forEach((poly) => {
       try { poly.remove(); } catch (e) {}
@@ -255,27 +255,30 @@ const LeafletMap: React.FC<Props> = ({ floatingActionButton }) => {
     });
     connectsPolygonsRef.current = [];
     connectsPolylinesRef.current = [];
-    
+
+    // connectsが空の場合は図形削除のみで終了
+    if (connects.length === 0) return;
+
     // 各Connectから図形を描画
     // Connect: pin_id_1 = 開始点と終了点、pin_id_2 = 中間点の配列
     connects.filter(c => c.show).forEach((connect) => {
       if (!connect.pin_id_2 || connect.pin_id_2.length === 0) return;
-      
+
       // ピンの順序: [pin_id_1, ...pin_id_2, pin_id_1] で閉じた図形
       const pinOrder: string[] = [connect.pin_id_1, ...connect.pin_id_2, connect.pin_id_1];
-      
+
       const coords = pinOrder.map((pinId) => {
         const pin = allPins.find((p: Pin) => p.id === pinId);
         return pin ? [normalizeLatitude(pin.latitude), normalizeLongitude(pin.longitude)] as [number, number] : null;
       }).filter((c): c is [number, number] => c !== null);
-      
+
       // 閉じた図形を描画（3点以上必要）
       if (coords.length >= 3) {
-        const polygon = Llib.polygon(coords, { 
-          color: '#4caf50', 
-          fillColor: '#81c784', 
-          fillOpacity: 0.3, 
-          weight: 2 
+        const polygon = Llib.polygon(coords, {
+          color: '#4caf50',
+          fillColor: '#81c784',
+          fillOpacity: 0.3,
+          weight: 2
         }).addTo(mapRef.current);
         connectsPolygonsRef.current.push(polygon);
       }

@@ -90,6 +90,18 @@ export default function NawabarPanel({ onClose }: { onClose?: () => void }) {
   }, []);
 
   /*------------------------------------------
+    編集モード終了検知
+  -------------------------------------------*/
+  useEffect(() => {
+    const handler = () => {
+      setIsEditMode(false);
+      setIsPolygonComplete(false);
+    };
+    window.addEventListener("editMode:off", handler);
+    return () => window.removeEventListener("editMode:off", handler);
+  }, []);
+
+  /*------------------------------------------
     編集
   -------------------------------------------*/
   const startEdit = () => {
