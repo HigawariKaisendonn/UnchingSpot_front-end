@@ -22,7 +22,7 @@ export default function LoginForm() {
     if (res.ok) {
       router.push('/home');
     } else {
-      setError(res.error?.body?.message || String(res.error));
+      setError(res.error?.message || 'エラーが発生しました');
     }
   };
 
